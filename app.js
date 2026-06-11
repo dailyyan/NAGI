@@ -1,8 +1,10 @@
 const storageKey = "nagi-care-state";
+const sessionStartedAt = new Date();
 
 const defaultState = {
   points: 40,
   cashOutRequests: 0,
+  firstVisitAt: new Date().toISOString(),
   profile: {
     energy: 68,
     mood: 74,
@@ -79,6 +81,59 @@ const cadenceLabel = {
   intermittent: "간헐 할일",
 };
 
+const adviceLibrary = {
+  morning: [
+    "아침에는 시작이 제일 중요해. 오늘은 작은 목표 하나로 리듬을 먼저 깨워보자.",
+    "아직 하루가 넓게 남아 있어. 큰 결심보다 첫 체크 표시를 빨리 만드는 게 좋아.",
+    "오늘의 첫 목표는 짧고 선명하게 잡아보자. 나기가 시작선을 같이 잡아줄게.",
+  ],
+  afternoon: [
+    "지금은 흐름을 다시 잡기 좋은 시간이야. 남은 에너지를 가장 중요한 곳에 먼저 써보자.",
+    "오후에는 목표를 너무 많이 늘리기보다, 하나씩 닫아가는 쪽이 좋아 보여.",
+    "오늘 중간 점검 시간이야. 지금 할 수 있는 목표와 나중으로 미룰 일을 가볍게 나눠보자.",
+  ],
+  evening: [
+    "저녁에는 완주보다 정리가 중요해. 오늘 끝낼 수 있는 작은 마무리부터 잡아보자.",
+    "하루가 꽤 지나왔어. 새로 벌리기보다 이미 정한 목표를 하나만 골라 닫아보자.",
+    "지금은 차분한 마무리 모드가 좋아 보여. 부담 큰 목표는 내일의 나기에게 넘겨도 괜찮아.",
+  ],
+  night: [
+    "밤에는 회복도 목표야. 아주 작은 정리 하나만 하고 몸을 편하게 돌려놓자.",
+    "지금은 무리해서 밀어붙이기보다 내일을 위한 발판을 놓는 시간이야.",
+    "오늘의 마지막 체크는 가볍게 가자. 나기는 네가 다시 이어갈 수 있게 기록해둘게.",
+  ],
+  highReadiness: [
+    "오늘은 추진력이 좋아 보여. 큰 목표 하나를 먼저 끝내고 작은 보상으로 흐름을 이어가자.",
+    "컨디션이 괜찮은 편이야. 중요한 목표를 앞쪽에 두면 성취감이 크게 남을 것 같아.",
+    "해낼 힘이 있는 날이야. 다만 너무 많이 담기보다 우선순위를 선명하게 잡아보자.",
+  ],
+  balanced: [
+    "오늘은 충분히 해낼 수 있는 날이야. 너무 크게 잡기보다 완료 표시를 여러 번 만들자.",
+    "균형이 괜찮아 보여. 집중 목표와 회복 목표를 하나씩 섞으면 오래 갈 수 있어.",
+    "오늘은 속도보다 흐름이 중요해. 30분 안에 끝나는 목표부터 시작해보자.",
+  ],
+  lowReadiness: [
+    "오늘은 보호 모드가 좋아 보여. 목표를 줄여도 기록을 남기면 흐름은 이어져.",
+    "컨디션이 낮은 날에는 작은 성공이 더 소중해. 쉬운 목표 하나부터 같이 잡자.",
+    "오늘은 나를 몰아붙이지 않는 쪽이 좋아. 회복 목표도 충분히 가치 있는 목표야.",
+  ],
+  highStress: [
+    "부담감이 높게 올라와 있어. 목표를 더하지 말고 지금 있는 것 중 하나만 작게 쪼개보자.",
+    "오늘은 압박을 낮추는 게 먼저야. 10분짜리 목표로 시작하면 마음이 조금 풀릴 수 있어.",
+    "해야 할 일이 커 보이는 날이야. 나기가 보기엔 완료보다 시작 표시가 먼저야.",
+  ],
+  noGoals: [
+    "아직 오늘 목표가 비어 있어. 아주 쉬운 목표 하나만 세워도 출석 보상은 이어져.",
+    "오늘의 계획 칸이 조용해. 부담 없는 목표 하나로 나기에게 오늘을 알려줘.",
+    "처음부터 완벽하게 잡지 않아도 돼. 지금 떠오르는 작은 일 하나만 적어보자.",
+  ],
+  completeProgress: [
+    "이미 꽤 해냈어. 남은 목표는 욕심보다 마무리 기준으로 골라보자.",
+    "완료 표시가 쌓이고 있어. 이 흐름을 지키려면 다음 목표는 조금 가볍게 가자.",
+    "좋아, 오늘 기록이 살아났어. 이제는 보상까지 생각하면서 천천히 닫아보자.",
+  ],
+};
+
 const $ = (selector) => document.querySelector(selector);
 let state = loadState();
 
@@ -90,7 +145,8 @@ function loadState() {
 
   try {
     const parsed = { ...structuredClone(defaultState), ...JSON.parse(saved) };
-    parsed.goals = (parsed.goals?.length ? parsed.goals : structuredClone(defaultState.goals)).map((goal) => ({
+    parsed.firstVisitAt = parsed.firstVisitAt || new Date().toISOString();
+    parsed.goals = (Array.isArray(parsed.goals) ? parsed.goals : structuredClone(defaultState.goals)).map((goal) => ({
       difficulty: "medium",
       importance: "normal",
       ...goal,
@@ -125,7 +181,7 @@ function recommendationFor(score) {
     return {
       title: "추천 강도: 확장 모드",
       body: "핵심 목표 3개까지 괜찮아 보여요. 대신 끝나면 회복 목표를 하나 넣어 균형을 맞춰요.",
-      advice: "오늘은 추진력이 좋아 보여. 큰 목표 하나를 먼저 끝내고, 작은 보상으로 흐름을 이어가자.",
+      advice: buildNagiAdvice(score),
       portrait: "assets/nagi-care.jpg",
     };
   }
@@ -134,7 +190,7 @@ function recommendationFor(score) {
     return {
       title: "추천 강도: 균형 모드",
       body: "핵심 목표 2개와 회복 목표 1개가 좋아 보여요. 목표는 40분 이하 단위로 쪼개면 좋아요.",
-      advice: "오늘은 충분히 해낼 수 있는 날이야. 너무 크게 잡기보다 완료 표시를 여러 번 만들자.",
+      advice: buildNagiAdvice(score),
       portrait: "assets/nagi-care.jpg",
     };
   }
@@ -142,9 +198,42 @@ function recommendationFor(score) {
   return {
     title: "추천 강도: 보호 모드",
     body: "필수 목표 1개와 회복 목표 2개를 추천해요. 완주보다 다시 시작하는 감각이 중요해요.",
-    advice: "오늘은 나를 밀어붙이기보다 지켜주는 계획이 좋아. 아주 작은 목표도 포인트를 줄게.",
+    advice: buildNagiAdvice(score),
     portrait: "assets/nagi-hug.jpg",
   };
+}
+
+function buildNagiAdvice(score) {
+  const bucket = chooseAdviceBucket(score);
+  const messages = adviceLibrary[bucket] || adviceLibrary.balanced;
+  return pickStableMessage(messages, `${todayKey()}-${bucket}-${score}-${state.goals.length}-${state.firstVisitAt}`);
+}
+
+function chooseAdviceBucket(score) {
+  const totalGoals = state.goals.length;
+  const doneGoals = state.goals.filter((goal) => goal.done).length;
+  const progress = totalGoals ? doneGoals / totalGoals : 0;
+
+  if (!totalGoals) return "noGoals";
+  if (state.profile.stress >= 72) return "highStress";
+  if (progress >= 0.65) return "completeProgress";
+  if (score >= 78) return "highReadiness";
+  if (score < 55) return "lowReadiness";
+  return getTimeAdviceBucket();
+}
+
+function getTimeAdviceBucket() {
+  const hour = sessionStartedAt.getHours();
+  if (hour < 6) return "night";
+  if (hour < 12) return "morning";
+  if (hour < 18) return "afternoon";
+  if (hour < 22) return "evening";
+  return "night";
+}
+
+function pickStableMessage(messages, seed) {
+  const hash = [...seed].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  return messages[hash % messages.length];
 }
 
 function todayKey() {
@@ -202,7 +291,10 @@ function renderGoals() {
         <span class="goal-title">${escapeHtml(goal.title)}</span>
         <span class="goal-sub">${typeLabel[goal.type]} · ${difficultyLabel[goal.difficulty]} · ${importanceLabel[goal.importance]} · ${calculateGoalPoints(goal)}P</span>
       </div>
-      <button type="button" data-goal="${goal.id}">${goal.done ? "완료" : "수행"}</button>
+      <div class="goal-actions">
+        <button type="button" data-goal="${goal.id}">${goal.done ? "완료" : "수행"}</button>
+        <button type="button" class="danger-button" data-delete-goal="${goal.id}" aria-label="${escapeHtml(goal.title)} 삭제">삭제</button>
+      </div>
     `;
     list.appendChild(card);
   });
@@ -350,6 +442,12 @@ function completeGoal(id) {
   today.done += 1;
   today.points += earned;
   state.points += earned;
+  saveState();
+  render();
+}
+
+function deleteGoal(id) {
+  state.goals = state.goals.filter((goal) => goal.id !== id);
   saveState();
   render();
 }
@@ -651,6 +749,12 @@ $("#goalForm").addEventListener("submit", (event) => {
 });
 
 $("#goalList").addEventListener("click", (event) => {
+  const deleteButton = event.target.closest("[data-delete-goal]");
+  if (deleteButton) {
+    deleteGoal(deleteButton.dataset.deleteGoal);
+    return;
+  }
+
   const button = event.target.closest("[data-goal]");
   if (button) completeGoal(button.dataset.goal);
 });

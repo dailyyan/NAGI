@@ -615,6 +615,21 @@ input[type="range"] {
   padding: 0 10px;
 }
 
+.goal-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.goal-actions .danger-button {
+  background: transparent;
+  color: #ffd9d9;
+}
+
+.goal-actions .danger-button:hover {
+  border-color: var(--rose);
+  background: rgba(233, 146, 146, 0.12);
+}
+
 .goal-card.is-done button,
 .task-card.is-done button,
 .shop-card.is-equipped button {
