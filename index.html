@@ -112,12 +112,31 @@
               </div>
             </div>
 
+            <section class="attendance-card" aria-label="목표 수립 출석">
+              <div>
+                <span class="label">ATTENDANCE</span>
+                <strong id="planStreak">0일 연속 목표 수립</strong>
+                <p id="nextUnlock">3일 연속 목표를 세우면 새 나기 일러스트가 열려요.</p>
+              </div>
+              <div class="attendance-days" id="attendanceDays" aria-label="최근 목표 수립 기록"></div>
+            </section>
+
             <form class="goal-form" id="goalForm">
               <input id="goalInput" type="text" placeholder="예: 강의 1개 듣기" autocomplete="off" />
               <select id="goalType" aria-label="목표 유형">
                 <option value="focus">집중</option>
                 <option value="care">회복</option>
                 <option value="body">체력</option>
+              </select>
+              <select id="goalDifficulty" aria-label="목표 난이도">
+                <option value="medium">난이도 중</option>
+                <option value="low">난이도 하</option>
+                <option value="high">난이도 상</option>
+              </select>
+              <select id="goalImportance" aria-label="목표 중요도">
+                <option value="normal">중요도 보통</option>
+                <option value="low">중요도 낮음</option>
+                <option value="high">중요도 높음</option>
               </select>
               <button type="submit">추가</button>
             </form>
@@ -209,6 +228,14 @@
                 <div class="shop-list" id="shopList"></div>
               </section>
             </div>
+
+            <section class="illustration-panel" aria-label="메인 일러스트 보관함">
+              <div class="mini-head">
+                <span class="label">ILLUSTRATION</span>
+                <strong>목표 수립 연속 보상</strong>
+              </div>
+              <div class="illustration-list" id="illustrationList"></div>
+            </section>
           </section>
 
           <section class="panel screen-panel app-view" id="view-history" data-view="history" aria-label="수행 이력">

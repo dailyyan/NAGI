@@ -10,10 +10,12 @@ const defaultState = {
     stress: 38,
   },
   goals: [
-    { id: crypto.randomUUID(), title: "가장 중요한 일 25분 집중", type: "focus", done: false },
-    { id: crypto.randomUUID(), title: "물 마시고 5분 정리하기", type: "care", done: false },
-    { id: crypto.randomUUID(), title: "몸 풀기 10분", type: "body", done: false },
+    { id: crypto.randomUUID(), title: "가장 중요한 일 25분 집중", type: "focus", difficulty: "medium", importance: "high", done: false },
+    { id: crypto.randomUUID(), title: "물 마시고 5분 정리하기", type: "care", difficulty: "low", importance: "normal", done: false },
+    { id: crypto.randomUUID(), title: "몸 풀기 10분", type: "body", difficulty: "low", importance: "normal", done: false },
   ],
+  planningDates: [todayKey()],
+  bestPlanStreak: 1,
   tasks: [
     { id: crypto.randomUUID(), title: "매주 생활비 정리", cadence: "weekly", dueDate: todayKey(), done: false, doneDates: [] },
     { id: crypto.randomUUID(), title: "택배 반품 확인", cadence: "once", dueDate: addDaysKey(1), done: false, doneDates: [] },
@@ -22,6 +24,7 @@ const defaultState = {
   history: [],
   inventory: ["기본 한복"],
   equipped: ["기본 한복"],
+  selectedIllustration: "care",
 };
 
 const shopItems = [
@@ -31,16 +34,42 @@ const shopItems = [
   { id: "nagi-badge", name: "나기 보호 뱃지", cost: 240, mood: "장기 목표 +10" },
 ];
 
+const illustrationRewards = [
+  { id: "care", name: "나기의 케어룸", requiredDays: 0, src: "assets/nagi-care.jpg" },
+  { id: "hug", name: "포근한 응원", requiredDays: 3, src: "assets/nagi-hug.jpg" },
+  { id: "street", name: "거리의 인사", requiredDays: 5, src: "assets/nagi-street.jpg" },
+  { id: "badge", name: "보호 배지", requiredDays: 7, src: "assets/nagi-badge.jpg" },
+  { id: "reference", name: "나기 설정화", requiredDays: 30, src: "assets/nagi-reference.jpg" },
+];
+
 const typeLabel = {
   focus: "집중",
   care: "회복",
   body: "체력",
 };
 
-const typePoint = {
-  focus: 34,
-  care: 22,
-  body: 28,
+const difficultyLabel = {
+  low: "난이도 하",
+  medium: "난이도 중",
+  high: "난이도 상",
+};
+
+const difficultyPoint = {
+  low: 10,
+  medium: 20,
+  high: 28,
+};
+
+const importanceLabel = {
+  low: "중요도 낮음",
+  normal: "중요도 보통",
+  high: "중요도 높음",
+};
+
+const importanceBonus = {
+  low: 0,
+  normal: 4,
+  high: 7,
 };
 
 const cadenceLabel = {
@@ -61,10 +90,21 @@ function loadState() {
 
   try {
     const parsed = { ...structuredClone(defaultState), ...JSON.parse(saved) };
+    parsed.goals = (parsed.goals?.length ? parsed.goals : structuredClone(defaultState.goals)).map((goal) => ({
+      difficulty: "medium",
+      importance: "normal",
+      ...goal,
+    }));
     parsed.inventory = parsed.inventory?.length ? parsed.inventory : ["기본 한복"];
     parsed.equipped = parsed.equipped?.length ? parsed.equipped : ["기본 한복"];
     parsed.tasks = parsed.tasks?.length ? parsed.tasks : structuredClone(defaultState.tasks);
     parsed.tasks = parsed.tasks.map((task) => ({ doneDates: [], done: false, dueDate: todayKey(), ...task }));
+    parsed.planningDates = Array.isArray(parsed.planningDates) ? [...new Set(parsed.planningDates)] : [];
+    if (!parsed.planningDates.length && parsed.goals?.length) parsed.planningDates = [todayKey()];
+    parsed.bestPlanStreak = Math.max(parsed.bestPlanStreak || 0, calculateBestPlanningStreak(parsed.planningDates));
+    parsed.selectedIllustration = illustrationRewards.some((item) => item.id === parsed.selectedIllustration)
+      ? parsed.selectedIllustration
+      : "care";
     return parsed;
   } catch {
     return structuredClone(defaultState);
@@ -147,7 +187,7 @@ function renderProfile() {
   $("#readinessScore").value = `${score}%`;
   $("#recommendation").innerHTML = `<strong>${rec.title}</strong><p>${rec.body}</p>`;
   $("#nagiAdvice").textContent = rec.advice;
-  $("#nagiPortrait").src = rec.portrait;
+  $("#nagiPortrait").src = getSelectedIllustration().src;
 }
 
 function renderGoals() {
@@ -160,7 +200,7 @@ function renderGoals() {
     card.innerHTML = `
       <div class="goal-meta">
         <span class="goal-title">${escapeHtml(goal.title)}</span>
-        <span class="goal-sub">${typeLabel[goal.type]} 목표 · ${typePoint[goal.type]}P</span>
+        <span class="goal-sub">${typeLabel[goal.type]} · ${difficultyLabel[goal.difficulty]} · ${importanceLabel[goal.importance]} · ${calculateGoalPoints(goal)}P</span>
       </div>
       <button type="button" data-goal="${goal.id}">${goal.done ? "완료" : "수행"}</button>
     `;
@@ -173,6 +213,35 @@ function renderGoals() {
   const ring = $(".progress-ring");
   $("#goalProgress").textContent = `${progress}%`;
   ring.style.background = `conic-gradient(var(--jade) ${progress * 3.6}deg, rgba(255, 255, 255, 0.12) 0deg)`;
+  renderPlanningRewardStatus();
+}
+
+function calculateGoalPoints(goal) {
+  const difficulty = difficultyPoint[goal.difficulty] ?? difficultyPoint.medium;
+  const importance = importanceBonus[goal.importance] ?? importanceBonus.normal;
+  return Math.min(35, Math.max(10, difficulty + importance));
+}
+
+function renderPlanningRewardStatus() {
+  const currentStreak = calculateCurrentPlanningStreak();
+  const bestStreak = Math.max(state.bestPlanStreak || 0, calculateBestPlanningStreak(state.planningDates));
+  state.bestPlanStreak = bestStreak;
+
+  $("#planStreak").textContent = `${currentStreak}일 연속 목표 수립`;
+  const nextReward = illustrationRewards.find((item) => item.requiredDays > bestStreak);
+  $("#nextUnlock").textContent = nextReward
+    ? `최고 ${bestStreak}일 달성. ${nextReward.requiredDays}일 연속이면 '${nextReward.name}' 일러스트가 열려요.`
+    : `최고 ${bestStreak}일 달성. 모든 나기 일러스트가 열렸어요.`;
+
+  const days = $("#attendanceDays");
+  days.innerHTML = "";
+  lastSevenDays().forEach((day) => {
+    const dot = document.createElement("span");
+    dot.className = `attendance-dot${state.planningDates.includes(day.key) ? " is-active" : ""}`;
+    dot.textContent = day.label.slice(0, 1);
+    dot.title = day.key;
+    days.appendChild(dot);
+  });
 }
 
 function renderTasks() {
@@ -275,9 +344,7 @@ function completeGoal(id) {
   if (!goal || goal.done) return;
 
   goal.done = true;
-  const score = readiness();
-  const careBonus = score < 55 ? 10 : 0;
-  const earned = typePoint[goal.type] + careBonus;
+  const earned = calculateGoalPoints(goal);
   const today = ensureTodayHistory();
 
   today.done += 1;
@@ -285,6 +352,15 @@ function completeGoal(id) {
   state.points += earned;
   saveState();
   render();
+}
+
+function markPlanningDay() {
+  const key = todayKey();
+  if (!state.planningDates.includes(key)) {
+    state.planningDates.push(key);
+    state.planningDates = state.planningDates.slice(-120);
+  }
+  state.bestPlanStreak = Math.max(state.bestPlanStreak || 0, calculateBestPlanningStreak(state.planningDates));
 }
 
 function renderRewards() {
@@ -331,6 +407,49 @@ function renderRewards() {
 
   const items = state.equipped.length ? state.equipped.join(", ") : "미착용";
   $("#activeItems").innerHTML = `<span>착용 중</span><strong>${items}</strong>`;
+  renderIllustrations();
+}
+
+function renderIllustrations() {
+  const list = $("#illustrationList");
+  const bestStreak = Math.max(state.bestPlanStreak || 0, calculateBestPlanningStreak(state.planningDates));
+  list.innerHTML = "";
+
+  illustrationRewards.forEach((item) => {
+    const unlocked = bestStreak >= item.requiredDays;
+    const selected = state.selectedIllustration === item.id;
+    const card = document.createElement("article");
+    card.className = `illustration-card${selected ? " is-selected" : ""}${unlocked ? "" : " is-locked"}`;
+    const status = unlocked ? (selected ? "적용 중" : "해금 완료") : `${item.requiredDays}일 연속 필요`;
+    const action = unlocked ? (selected ? "적용 중" : "바꾸기") : "잠김";
+    card.innerHTML = `
+      <img src="${item.src}" alt="${item.name}" />
+      <div>
+        <strong>${item.name}</strong>
+        <span>${status}</span>
+      </div>
+      <button type="button" data-illustration="${item.id}" ${unlocked ? "" : "disabled"}>${action}</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function selectIllustration(id) {
+  const item = illustrationRewards.find((entry) => entry.id === id);
+  const bestStreak = Math.max(state.bestPlanStreak || 0, calculateBestPlanningStreak(state.planningDates));
+  if (!item || bestStreak < item.requiredDays) return;
+
+  state.selectedIllustration = id;
+  saveState();
+  render();
+}
+
+function getSelectedIllustration() {
+  const selected = illustrationRewards.find((item) => item.id === state.selectedIllustration);
+  const bestStreak = Math.max(state.bestPlanStreak || 0, calculateBestPlanningStreak(state.planningDates));
+  if (selected && bestStreak >= selected.requiredDays) return selected;
+  state.selectedIllustration = "care";
+  return illustrationRewards[0];
 }
 
 function handleShopItem(id) {
@@ -425,6 +544,41 @@ function calculateStreak() {
   return streak;
 }
 
+function calculateCurrentPlanningStreak() {
+  const dates = new Set(state.planningDates || []);
+  let streak = 0;
+
+  for (let offset = 0; offset < 365; offset += 1) {
+    const date = new Date();
+    date.setDate(date.getDate() - offset);
+    if (!dates.has(dateKey(date))) break;
+    streak += 1;
+  }
+
+  return streak;
+}
+
+function calculateBestPlanningStreak(dates) {
+  const sorted = [...new Set(dates || [])].sort();
+  let best = 0;
+  let current = 0;
+  let previous = null;
+
+  sorted.forEach((key) => {
+    const date = new Date(`${key}T00:00:00`);
+    if (previous) {
+      const diff = Math.round((date - previous) / 86400000);
+      current = diff === 1 ? current + 1 : 1;
+    } else {
+      current = 1;
+    }
+    best = Math.max(best, current);
+    previous = date;
+  });
+
+  return best;
+}
+
 function escapeHtml(value) {
   return value.replace(/[&<>"']/g, (char) => {
     const entities = {
@@ -486,8 +640,11 @@ $("#goalForm").addEventListener("submit", (event) => {
     id: crypto.randomUUID(),
     title,
     type: $("#goalType").value,
+    difficulty: $("#goalDifficulty").value,
+    importance: $("#goalImportance").value,
     done: false,
   });
+  markPlanningDay();
   $("#goalInput").value = "";
   saveState();
   render();
@@ -525,6 +682,11 @@ document.querySelector(".task-columns").addEventListener("click", (event) => {
 $("#shopList").addEventListener("click", (event) => {
   const button = event.target.closest("[data-shop]");
   if (button) handleShopItem(button.dataset.shop);
+});
+
+$("#illustrationList").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-illustration]");
+  if (button) selectIllustration(button.dataset.illustration);
 });
 
 $("#cashOutButton").addEventListener("click", () => {

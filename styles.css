@@ -250,8 +250,10 @@ body[data-view="home"] .care-layout {
 .nagi-message,
 .active-items,
 .recommendation,
+.attendance-card,
 .wallet,
 .closet-panel,
+.illustration-panel,
 .insight-row article {
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -359,6 +361,50 @@ input[type="range"] {
   line-height: 1.55;
 }
 
+.attendance-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 14px;
+}
+
+.attendance-card strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.2rem;
+}
+
+.attendance-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.attendance-days {
+  display: grid;
+  grid-template-columns: repeat(7, 22px);
+  gap: 7px;
+}
+
+.attendance-dot {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.attendance-dot.is-active {
+  border-color: rgba(109, 182, 159, 0.76);
+  background: rgba(109, 182, 159, 0.18);
+  color: #dff9ef;
+}
+
 .next-actions {
   margin-top: 20px;
 }
@@ -375,7 +421,7 @@ input[type="range"] {
 .goal-form,
 .task-form {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) 96px 76px;
+  grid-template-columns: minmax(120px, 1fr) 96px 116px 124px 76px;
   gap: 8px;
   margin-bottom: 14px;
 }
@@ -394,6 +440,7 @@ input[type="range"] {
 .wallet button,
 .goal-card button,
 .task-card button,
+.illustration-card button,
 .shop-card button,
 .quiet-button {
   min-height: 42px;
@@ -421,6 +468,7 @@ input[type="range"] {
 .wallet button,
 .goal-card button,
 .task-card button,
+.illustration-card button,
 .shop-card button {
   background: var(--pearl);
   color: var(--ink);
@@ -433,12 +481,14 @@ input[type="range"] {
 .wallet button:hover,
 .goal-card button:hover,
 .task-card button:hover,
+.illustration-card button:hover,
 .shop-card button:hover {
   background: #dff9ef;
 }
 
 .goal-list,
 .task-list,
+.illustration-list,
 .shop-list,
 .equipped-list {
   display: grid;
@@ -470,6 +520,68 @@ input[type="range"] {
 
 .shop-card.is-locked {
   opacity: 0.82;
+}
+
+.illustration-panel {
+  margin-top: 14px;
+  padding: 14px;
+}
+
+.illustration-list {
+  grid-template-columns: repeat(5, minmax(130px, 1fr));
+}
+
+.illustration-card {
+  display: grid;
+  grid-template-rows: 112px minmax(64px, auto) 42px;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.illustration-card.is-selected {
+  border-color: rgba(109, 182, 159, 0.82);
+  background: rgba(109, 182, 159, 0.12);
+}
+
+.illustration-card.is-locked {
+  opacity: 0.62;
+}
+
+.illustration-card img {
+  width: 100%;
+  height: 112px;
+  border-radius: calc(var(--radius) - 2px);
+  object-fit: cover;
+  background: #050505;
+}
+
+.illustration-card strong,
+.illustration-card span {
+  display: block;
+}
+
+.illustration-card strong {
+  overflow-wrap: anywhere;
+}
+
+.illustration-card span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.illustration-card button {
+  width: 100%;
+}
+
+.illustration-card.is-selected button {
+  background: rgba(109, 182, 159, 0.18);
+  color: #dff9ef;
 }
 
 .goal-meta,
@@ -710,7 +822,8 @@ input[type="range"] {
 @media (max-width: 980px) {
   .care-layout,
   .reward-layout,
-  .task-columns {
+  .task-columns,
+  .illustration-list {
     grid-template-columns: 1fr;
   }
 
@@ -803,6 +916,7 @@ input[type="range"] {
   }
 
   .wallet,
+  .attendance-card,
   .goal-card,
   .task-card,
   .shop-card,
