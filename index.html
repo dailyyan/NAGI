@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>나기 케어</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar" aria-label="서비스 상단">
+        <a class="brand" href="#home" data-nav="home">
+          <span class="brand-mark">N</span>
+          <span>
+            <strong>나기 케어</strong>
+            <small>토탈 맞춤케어</small>
+          </span>
+        </a>
+        <nav class="top-actions" aria-label="화면 이동">
+          <a href="#checkin" data-nav="checkin">상태</a>
+          <a href="#goals" data-nav="goals">목표</a>
+          <a href="#tasks" data-nav="tasks">일정</a>
+          <a href="#rewards" data-nav="rewards">보상</a>
+          <a href="#history" data-nav="history">이력</a>
+        </nav>
+      </header>
+
+      <section class="hero app-view" id="home" data-view="home" aria-label="나기 케어 소개">
+        <div class="hero-media">
+          <img src="assets/nagi-street.jpg" alt="거리에서 인사하는 나기" />
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">NAGI PERSONAL CARE</p>
+          <h1>나만의 비서 서비스 나기</h1>
+          <p>
+            오늘의 감정, 체력, 목표 부담을 함께 보고 지금 할 수 있는 만큼의 계획을 잡아줘요.
+            해낸 일은 이력으로 남고, 포인트는 나기를 꾸미는 보상이 됩니다.
+          </p>
+          <a class="primary-link" href="#checkin" data-nav="checkin">오늘 상태 체크</a>
+        </div>
+      </section>
+
+      <section class="care-layout" aria-label="나기 케어 앱 화면">
+        <aside class="nagi-panel panel" aria-label="나기 상태">
+          <div class="nagi-portrait">
+            <img id="nagiPortrait" src="assets/nagi-care.jpg" alt="나기 캐릭터" />
+          </div>
+          <div class="nagi-message">
+            <span class="label">나기의 조언</span>
+            <p id="nagiAdvice">오늘 컨디션을 알려줘. 나기가 목표 강도를 같이 맞춰볼게.</p>
+          </div>
+          <div class="active-items" id="activeItems" aria-live="polite">
+            <span>착용 중</span>
+            <strong>기본 한복</strong>
+          </div>
+        </aside>
+
+        <section class="view-stage">
+          <section class="panel screen-panel app-view" id="view-checkin" data-view="checkin" aria-label="오늘 상태 입력">
+            <div class="section-head">
+              <div>
+                <span class="label">CHECK-IN</span>
+                <h2>오늘의 상태</h2>
+              </div>
+              <output id="readinessScore" class="score-pill">72%</output>
+            </div>
+
+            <div class="slider-list">
+              <label>
+                <span>체력</span>
+                <input id="energy" type="range" min="0" max="100" value="68" />
+                <output for="energy">68</output>
+              </label>
+              <label>
+                <span>감정 안정감</span>
+                <input id="mood" type="range" min="0" max="100" value="74" />
+                <output for="mood">74</output>
+              </label>
+              <label>
+                <span>집중 여유</span>
+                <input id="focus" type="range" min="0" max="100" value="61" />
+                <output for="focus">61</output>
+              </label>
+              <label>
+                <span>부담감</span>
+                <input id="stress" type="range" min="0" max="100" value="38" />
+                <output for="stress">38</output>
+              </label>
+            </div>
+
+            <div class="recommendation" id="recommendation">
+              <strong>추천 강도: 균형 모드</strong>
+              <p>핵심 목표 2개와 회복 목표 1개가 좋아 보여요.</p>
+            </div>
+
+            <div class="next-actions">
+              <a href="#goals" data-nav="goals">목표 정하기</a>
+            </div>
+          </section>
+
+          <section class="panel screen-panel app-view" id="view-goals" data-view="goals" aria-label="오늘의 목표">
+            <div class="section-head">
+              <div>
+                <span class="label">TODAY</span>
+                <h2>오늘의 목표</h2>
+              </div>
+              <div class="progress-ring" aria-label="오늘 목표 진행률">
+                <span id="goalProgress">0%</span>
+              </div>
+            </div>
+
+            <form class="goal-form" id="goalForm">
+              <input id="goalInput" type="text" placeholder="예: 강의 1개 듣기" autocomplete="off" />
+              <select id="goalType" aria-label="목표 유형">
+                <option value="focus">집중</option>
+                <option value="care">회복</option>
+                <option value="body">체력</option>
+              </select>
+              <button type="submit">추가</button>
+            </form>
+
+            <div class="goal-list" id="goalList" aria-live="polite"></div>
+          </section>
+
+          <section class="panel screen-panel app-view" id="view-tasks" data-view="tasks" aria-label="캘린더와 할일 목록">
+            <div class="section-head">
+              <div>
+                <span class="label">CALENDAR</span>
+                <h2>캘린더와 할일</h2>
+              </div>
+              <strong id="taskCount" class="score-pill">0개</strong>
+            </div>
+
+            <div class="calendar-strip" id="calendarStrip" aria-label="7일 캘린더"></div>
+
+            <form class="task-form" id="taskForm">
+              <input id="taskInput" type="text" placeholder="예: 세탁기 청소, 약 주문, 매주 독서 기록" autocomplete="off" />
+              <select id="taskCadence" aria-label="할일 반복 방식">
+                <option value="once">단순건</option>
+                <option value="daily">매일 반복</option>
+                <option value="weekly">매주 반복</option>
+                <option value="intermittent">간헐 할일</option>
+              </select>
+              <input id="taskDate" type="date" aria-label="예정일" />
+              <button type="submit">등록</button>
+            </form>
+
+            <div class="task-columns" aria-live="polite">
+              <section class="task-column">
+                <div class="mini-head">
+                  <span class="label">REPEAT</span>
+                  <strong>반복적으로 해야 할 일</strong>
+                </div>
+                <div class="task-list" id="repeatTaskList"></div>
+              </section>
+              <section class="task-column">
+                <div class="mini-head">
+                  <span class="label">SIMPLE</span>
+                  <strong>단순건</strong>
+                </div>
+                <div class="task-list" id="onceTaskList"></div>
+              </section>
+              <section class="task-column">
+                <div class="mini-head">
+                  <span class="label">SOMEDAY</span>
+                  <strong>간헐적으로 챙길 일</strong>
+                </div>
+                <div class="task-list" id="intermittentTaskList"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel screen-panel app-view" id="view-rewards" data-view="rewards" aria-label="보상 지갑">
+            <div class="section-head">
+              <div>
+                <span class="label">REWARD</span>
+                <h2>나기 포인트</h2>
+              </div>
+              <strong id="pointsTotal" class="points">0 P</strong>
+            </div>
+
+            <div class="reward-layout">
+              <div>
+                <div class="wallet">
+                  <div>
+                    <span>가상 보상금</span>
+                    <strong id="cashValue">0원</strong>
+                  </div>
+                  <button id="cashOutButton" type="button">출금 예약</button>
+                </div>
+
+                <section class="closet-panel" aria-label="착용 아이템">
+                  <div class="mini-head">
+                    <span class="label">EQUIPPED</span>
+                    <strong>착용 중</strong>
+                  </div>
+                  <div class="equipped-list" id="equippedList"></div>
+                </section>
+              </div>
+
+              <section class="closet-panel" aria-label="보유 아이템">
+                <div class="mini-head">
+                  <span class="label">CLOSET</span>
+                  <strong>보유 / 미착용</strong>
+                </div>
+                <div class="shop-list" id="shopList"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel screen-panel app-view" id="view-history" data-view="history" aria-label="수행 이력">
+            <div class="section-head">
+              <div>
+                <span class="label">TRACKING</span>
+                <h2>이력 추적</h2>
+              </div>
+              <button id="resetButton" type="button" class="quiet-button">초기화</button>
+            </div>
+            <div class="history-grid" id="historyGrid"></div>
+            <div class="insight-row">
+              <article>
+                <span>완료한 목표</span>
+                <strong id="doneCount">0개</strong>
+              </article>
+              <article>
+                <span>평균 컨디션</span>
+                <strong id="avgReadiness">0%</strong>
+              </article>
+              <article>
+                <span>연속 기록</span>
+                <strong id="streakCount">0일</strong>
+              </article>
+            </div>
+
+            <section class="gallery" aria-label="나기 이미지 갤러리">
+              <img src="assets/nagi-reference.jpg" alt="나기 캐릭터 설정화" />
+              <img src="assets/nagi-hug.jpg" alt="인형을 안고 웃는 나기" />
+              <img src="assets/nagi-badge.jpg" alt="나기와 상징 배지" />
+            </section>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
