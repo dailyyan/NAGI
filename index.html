@@ -26,6 +26,10 @@
           <a href="#rewards" data-nav="rewards">보상</a>
           <a href="#history" data-nav="history">이력</a>
         </nav>
+        <form class="nickname-form" id="nicknameForm" aria-label="닉네임 설정">
+          <input id="nicknameInput" type="text" inputmode="text" autocomplete="nickname" maxlength="16" placeholder="닉네임" />
+          <button type="submit">저장</button>
+        </form>
       </header>
 
       <section class="hero app-view" id="home" data-view="home" aria-label="나기 케어 소개">
@@ -39,6 +43,7 @@
             오늘의 감정, 체력, 목표 부담을 함께 보고 지금 할 수 있는 만큼의 계획을 잡아줘요.
             해낸 일은 이력으로 남고, 포인트는 나기를 꾸미는 보상이 됩니다.
           </p>
+          <p class="greeting-line" id="homeGreeting">닉네임을 입력하면 나기가 기록을 따로 보관해둘게요.</p>
           <a class="primary-link" href="#checkin" data-nav="checkin">오늘 상태 체크</a>
         </div>
       </section>
@@ -49,7 +54,7 @@
             <img id="nagiPortrait" src="assets/nagi-care.jpg" alt="나기 캐릭터" />
           </div>
           <div class="nagi-message">
-            <span class="label">나기의 조언</span>
+            <span class="label" id="profileGreeting">나기의 조언</span>
             <p id="nagiAdvice">오늘 컨디션을 알려줘. 나기가 목표 강도를 같이 맞춰볼게.</p>
           </div>
           <div class="active-items" id="activeItems" aria-live="polite">

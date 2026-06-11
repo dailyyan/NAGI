@@ -67,7 +67,8 @@ a {
 }
 
 .brand,
-.top-actions {
+.top-actions,
+.nickname-form {
   display: flex;
   align-items: center;
 }
@@ -106,7 +107,9 @@ a {
 
 .top-actions a,
 .primary-link,
-.next-actions a {
+.next-actions a,
+.nickname-form input,
+.nickname-form button {
   min-width: 56px;
   padding: 9px 12px;
   border: 1px solid var(--line);
@@ -115,12 +118,36 @@ a {
   text-decoration: none;
 }
 
+.nickname-form {
+  gap: 8px;
+}
+
+.nickname-form input {
+  width: 132px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  text-align: left;
+}
+
+.nickname-form button {
+  min-width: 54px;
+  background: var(--pearl);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
 .top-actions a:hover,
 .top-actions a.is-active,
 .primary-link:hover,
 .next-actions a:hover {
   border-color: rgba(109, 182, 159, 0.8);
   color: #dff9ef;
+}
+
+.nickname-form input:focus,
+.nickname-form button:hover {
+  border-color: rgba(109, 182, 159, 0.8);
 }
 
 .app-view {
@@ -192,6 +219,12 @@ a {
   color: #eee8de;
   font-size: clamp(1rem, 2vw, 1.25rem);
   line-height: 1.75;
+}
+
+.hero .greeting-line {
+  margin-top: 16px;
+  color: #dff9ef;
+  font-weight: 800;
 }
 
 .primary-link {
@@ -871,6 +904,15 @@ input[type="range"] {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     width: 100%;
+  }
+
+  .nickname-form {
+    width: 100%;
+  }
+
+  .nickname-form input {
+    flex: 1;
+    width: auto;
   }
 
   .top-actions a {

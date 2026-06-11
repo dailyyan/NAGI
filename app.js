@@ -1,10 +1,15 @@
-const storageKey = "nagi-care-state";
+const baseStorageKey = "nagi-care-state";
+const activeNicknameKey = "nagi-care-active-nickname";
 const sessionStartedAt = new Date();
+let activeNickname = localStorage.getItem(activeNicknameKey) || "";
 
 const defaultState = {
+  nickname: "",
   points: 40,
   cashOutRequests: 0,
   firstVisitAt: new Date().toISOString(),
+  visitDates: [todayKey()],
+  lastVisitAt: new Date().toISOString(),
   profile: {
     energy: 68,
     mood: 74,
@@ -140,12 +145,23 @@ let state = loadState();
 const controls = ["energy", "mood", "focus", "stress"].map((id) => $(`#${id}`));
 
 function loadState() {
-  const saved = localStorage.getItem(storageKey);
-  if (!saved) return structuredClone(defaultState);
+  const saved = localStorage.getItem(getStorageKey());
+  if (!saved) return prepareState(structuredClone(defaultState));
 
   try {
     const parsed = { ...structuredClone(defaultState), ...JSON.parse(saved) };
+    return prepareState(parsed);
+  } catch {
+    return prepareState(structuredClone(defaultState));
+  }
+}
+
+function prepareState(parsed) {
+    parsed.nickname = activeNickname;
     parsed.firstVisitAt = parsed.firstVisitAt || new Date().toISOString();
+    parsed.visitDates = Array.isArray(parsed.visitDates) ? [...new Set(parsed.visitDates)] : [];
+    if (!parsed.visitDates.includes(todayKey())) parsed.visitDates.push(todayKey());
+    parsed.lastVisitAt = new Date().toISOString();
     parsed.goals = (Array.isArray(parsed.goals) ? parsed.goals : structuredClone(defaultState.goals)).map((goal) => ({
       difficulty: "medium",
       importance: "normal",
@@ -162,13 +178,58 @@ function loadState() {
       ? parsed.selectedIllustration
       : "care";
     return parsed;
-  } catch {
-    return structuredClone(defaultState);
-  }
 }
 
 function saveState() {
-  localStorage.setItem(storageKey, JSON.stringify(state));
+  localStorage.setItem(getStorageKey(), JSON.stringify(state));
+}
+
+function getStorageKey(nickname = activeNickname) {
+  return nickname ? `${baseStorageKey}:${nickname}` : baseStorageKey;
+}
+
+function normalizeNickname(value) {
+  return value.trim();
+}
+
+function isValidNickname(value) {
+  return /^[가-힣A-Za-z0-9]+$/.test(value);
+}
+
+function sanitizeNickname(value) {
+  return value.replace(/[^가-힣A-Za-z0-9]/g, "");
+}
+
+function setNickname(value) {
+  const nickname = normalizeNickname(value);
+  const previousNickname = activeNickname;
+  if (!nickname || !isValidNickname(nickname)) {
+    $("#nicknameInput").setCustomValidity("한글, 영어, 숫자만 입력할 수 있어요.");
+    $("#nicknameInput").reportValidity();
+    return;
+  }
+
+  saveState();
+  activeNickname = nickname;
+  localStorage.setItem(activeNicknameKey, activeNickname);
+
+  const existing = localStorage.getItem(getStorageKey());
+  if (existing) {
+    state = loadState();
+  } else if (!previousNickname) {
+    state = prepareState({ ...state, nickname: activeNickname });
+  } else {
+    state = loadState();
+  }
+
+  saveState();
+  render();
+}
+
+function visitGreeting() {
+  if (!activeNickname) return "닉네임을 입력하면 나기가 기록을 따로 보관해둘게요.";
+  const days = Math.max(1, state.visitDates?.length || 1);
+  return `${activeNickname}님 안녕하세요. ${days}일째 방문이네요. 반가워요.`;
 }
 
 function readiness() {
@@ -266,6 +327,10 @@ function ensureTodayHistory() {
 }
 
 function renderProfile() {
+  $("#nicknameInput").value = activeNickname;
+  $("#homeGreeting").textContent = visitGreeting();
+  $("#profileGreeting").textContent = activeNickname ? `${activeNickname}님 ${state.visitDates.length}일째 방문` : "나기의 조언";
+
   controls.forEach((control) => {
     control.value = state.profile[control.id];
     control.parentElement.querySelector("output").value = control.value;
@@ -729,6 +794,17 @@ controls.forEach((control) => {
   });
 });
 
+$("#nicknameInput").addEventListener("input", (event) => {
+  const sanitized = sanitizeNickname(event.target.value);
+  if (event.target.value !== sanitized) event.target.value = sanitized;
+  event.target.setCustomValidity("");
+});
+
+$("#nicknameForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  setNickname($("#nicknameInput").value);
+});
+
 $("#goalForm").addEventListener("submit", (event) => {
   event.preventDefault();
   const title = $("#goalInput").value.trim();
@@ -802,7 +878,7 @@ $("#cashOutButton").addEventListener("click", () => {
 $("#resetButton").addEventListener("click", () => {
   const keep = confirm("나기 케어 기록을 처음 상태로 되돌릴까요?");
   if (!keep) return;
-  state = structuredClone(defaultState);
+  state = prepareState(structuredClone(defaultState));
   saveState();
   render();
 });
